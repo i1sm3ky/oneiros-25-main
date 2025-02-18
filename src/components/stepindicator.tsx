@@ -17,7 +17,7 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
                 : "border-gray-300 text-purple-300"
             }`}
           >
-            {index < currentStep ? <Check className="w-5 h-5 bg-green-800" /> : <span  >{index + 1}</span>}
+            {index < currentStep ? <Check className="w-5 h-5" /> : <span  >{index + 1}</span>}
           </div>
           <span className={`ml-2 ${index <= currentStep ? "text-primary font-bold text-purple-400" : "text-purple-400"}`}>{step}</span>
           {index < steps.length - 1 && (

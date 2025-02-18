@@ -64,7 +64,8 @@ const events = [
 ]
 
 export default function MajortRegistrationForm() {
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0);
+  const [errormessage, SetErrorMessage] = useState("");
   const [formData, setFormData] = useState({
     teamLeader: "",
     teamLeaderEmail: "",
@@ -80,22 +81,50 @@ export default function MajortRegistrationForm() {
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
   const handleSelectChange = (value: string, name: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  // Function to validate required fields for each step
+  const validateForm = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          formData.teamLeader &&
+          formData.teamLeaderEmail &&
+          formData.teamLeaderContact &&
+          formData.teamLeaderIdCard &&
+          formData.collegeName
+        );
+      case 1:
+        return formData.teamName && formData.teamMembersCount && formData.teamMembersNames;
+      case 2:
+        return formData.selectedEvent;
+      case 3:
+        return formData.entryLink;
+      default:
+        return false;
+    }
+  };
+  
+  // Modified handleNext to prevent moving forward if form is invalid
   const handleNext = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
-  }
-
+    if (validateForm()) {
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+    } else {
+       SetErrorMessage("Please fill in all required fields.");
+      console.log('Please fill in all required fields.');
+    }
+  };
+  
   const handlePrevious = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0))
-  }
-
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
@@ -119,6 +148,9 @@ export default function MajortRegistrationForm() {
         selectedEvent: "",
         entryLink: "",
       });
+  
+      // Optionally reset current step to the first one
+      setCurrentStep(0);
     } catch (error) {
       console.error("Error submitting form:", error);
     }
@@ -135,12 +167,14 @@ export default function MajortRegistrationForm() {
     <CardDescription className="text-lg font-inclusive-sans">Register for Oneiros events: Destival, Requiem, and Cosmos</CardDescription>
   </CardHeader>
   <CardContent>
-    <StepIndicator steps={steps} currentStep={currentStep} />
+  <div className="hidden sm:block">
+      <StepIndicator steps={steps} currentStep={currentStep} />
+    </div>
     <form onSubmit={handleSubmit}>
       {/* Step 1: Basic Details */}
       {currentStep === 0 && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="teamLeader" className="text-purple-400">Team Leader *</Label>
               <Input
@@ -165,7 +199,7 @@ export default function MajortRegistrationForm() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="teamLeaderContact" className="text-purple-400">Team Leader Contact Number *</Label>
               <Input
@@ -191,7 +225,7 @@ export default function MajortRegistrationForm() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="collegeName" className="text-purple-400">College Name *</Label>
               <Input
@@ -211,6 +245,7 @@ export default function MajortRegistrationForm() {
                 value={formData.collegeRegion}
                 onChange={handleInputChange}
                 className="bg-black border-purple-400 text-purple-200"
+                required
               />
             </div>
           </div>
@@ -220,7 +255,7 @@ export default function MajortRegistrationForm() {
       {/* Step 2: Team Information */}
       {currentStep === 1 && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="teamName" className="text-purple-400">Team Name *</Label>
               <Input
@@ -312,34 +347,46 @@ export default function MajortRegistrationForm() {
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-6">
-        <Button
-          type="button"
-          onClick={handlePrevious}
-          disabled={currentStep === 0}
-          className={`px-6 py-3 text-purple-200 rounded-lg ${
-            currentStep === 0 ? "bg-gray-600 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
-          }`}
-        >
-          Previous
-        </Button>
-        {currentStep < steps.length - 1 ? (
-          <Button
-            type="button"
-            onClick={handleNext}
-            className="px-6 py-3 bg-purple-600 text-purple-200 rounded-lg hover:bg-purple-700"
-          >
-            Next
-          </Button>
-        ) : (
-          <Button
-            type="submit"
-            className="px-6 py-3 bg-green-600 text-purple-200 rounded-lg hover:bg-green-700"
-          >
-            Submit
-          </Button>
-        )}
-      </div>
+      <div className="flex flex-col items-center mt-6">
+  {/* Display error message if any required fields are missing */}
+  {!validateForm() && currentStep < steps.length - 1 && (
+    <div className="text-red-500 text-sm mb-4">
+      Please fill in all required fields.
+    </div>
+  )}
+  
+  <div className="flex justify-between w-full">
+    <Button
+      type="button"
+      onClick={handlePrevious}
+      disabled={currentStep === 0}
+      className={`px-6 py-3 text-purple-200 rounded-lg ${
+        currentStep === 0
+          ? "bg-gray-600 cursor-not-allowed"
+          : "bg-purple-600 hover:bg-purple-700"
+      }`}
+    >
+      Previous
+    </Button>
+    
+    {currentStep < steps.length - 1 ? (
+      <Button
+        type="button"
+        onClick={handleNext}
+        className="px-6 py-3 bg-purple-600 text-purple-200 rounded-lg hover:bg-purple-700"
+      >
+        Next
+      </Button>
+    ) : (
+      <Button
+        type="submit"
+        className="px-6 py-3 bg-green-600 text-purple-200 rounded-lg hover:bg-green-700"
+      >
+        Submit
+      </Button>
+    )}
+  </div>
+</div>
     </form>
   </CardContent>
 </Card>
